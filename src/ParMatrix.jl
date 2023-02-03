@@ -23,3 +23,5 @@ init(A::ParMatrix{T}) where {T} = [rand(T, A.m, A.n)]
 *(x::X, A::ParParameterized{T,T,Linear,ParMatrix{T},V}) where {T,V,X<:AbstractMatrix{T}} = x*A.params[1]
 *(x::X, A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParMatrix{T}},V}) where {T,V,X<:AbstractVector{T}} = x*A.params[1]'
 *(x::X, A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParMatrix{T}},V}) where {T,V,X<:AbstractMatrix{T}} = x*A.params[1]'
+
+complexity(A::ParMatrix{T}, m::MachineModel) where {T} = MultCost(m, T) * A.n * A.m + AddCost(m, T) * A.n * (A.m-1)

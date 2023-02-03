@@ -22,3 +22,5 @@ init(A::ParDiagonal{T}) where {T} = [rand(T, A.n)]
 *(x::X, A::ParParameterized{T,T,Linear,ParDiagonal{T},V}) where {T,V,X<:AbstractMatrix{T}} = x.*A.params[1]
 *(x::X, A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParDiagonal{T}},V}) where {T,V,X<:AbstractVector{T}} = x.*conj(A.params[1])
 *(x::X, A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParDiagonal{T}},V}) where {T,V,X<:AbstractMatrix{T}} = x.*conj(A.params[1])
+
+complexity(A::ParDiagonal{T}, m::MachineModel) where {T} = MultCost(m, T) * A.n

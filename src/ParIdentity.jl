@@ -18,3 +18,5 @@ adjoint(A::ParIdentity) = A
 (A::ParDistributed{T,T,Linear,NonParametric,ParIdentity{T}})(x::X) where {T,X<:AbstractVector{T}} = x
 (A::ParDistributed{T,T,Linear,NonParametric,ParIdentity{T}})(x::X) where {T,X<:AbstractMatrix{T}} = x
 *(x::X, A::ParDistributed{T,T,Linear,NonParametric,ParIdentity{T}}) where {T,X<:AbstractMatrix{T}} = x
+
+complexity(A::ParIdentity, m::MachineModel) = 0.0

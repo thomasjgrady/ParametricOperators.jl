@@ -1,5 +1,5 @@
 export ParOperator, ParLinearOperator
-export DDT, RDT, Domain, Range, linearity, parametricity, ast_location
+export DDT, RDT, Domain, Range, linearity, parametricity, ast_location, complexity
 export children, nparams, init, from_children
 
 # ==== Type Definitions ====

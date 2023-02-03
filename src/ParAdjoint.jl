@@ -17,3 +17,5 @@ children(A::ParAdjoint) = [A.op]
 from_children(::ParAdjoint, cs) = ParAdjoint(cs[1])
 
 (A::ParAdjoint{D,R,Parametric,F})(params) where {D,R,F} = ParParameterized(adjoint(A.op), params)
+
+complexity(A::ParAdjoint, m::MachineModel) = complexity(A.op, m)

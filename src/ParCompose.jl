@@ -10,7 +10,7 @@ struct RightFirst <: ParamOrder end
 struct ParCompose{D,R,L,P,F,N,O<:ParamOrder} <: ParOperator{D,R,L,P,Internal}
     ops::F
     function ParCompose(ops...; order=LeftFirst)
-        ops = collect(ops) 
+        ops = collect(ops)
         N = length(ops)
         if N == 1
             return ops[1]
@@ -21,7 +21,7 @@ struct ParCompose{D,R,L,P,F,N,O<:ParamOrder} <: ParOperator{D,R,L,P,Internal}
                 @assert DDT(ops[i]) == RDT(ops[i+1])
             end
         end
-        
+
         D = DDT(ops[N])
         R = RDT(ops[1])
         L = foldl(promote_linearity, map(linearity, ops))
@@ -77,3 +77,5 @@ function *(x::X, A::ParCompose{D,R,Linear,<:Applicable,F,N,O}) where {D,R,F,N,O,
     end
     return x
 end
+
+complexity(A::ParCompose, m::MachineModel) = mapreduce(op -> complexity(op, m), +, A.ops)

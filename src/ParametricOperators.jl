@@ -19,6 +19,9 @@ using Random: GLOBAL_RNG
 # Common types and functions
 include("ParCommon.jl")
 
+# Machine Model used for complexity estimation
+include("MachineModel.jl")
+
 # Base operator definition and functionality
 include("ParOperator.jl")
 

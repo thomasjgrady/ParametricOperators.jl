@@ -19,9 +19,9 @@ struct ParKron{D,R,P,F,N} <: ParSeparableOperator{D,R,P,Internal}
     perms::Vector{NTuple{N, Int}} # List of permutations between input/output and intermediates
     shapes_in::Vector{NTuple{N, Int}} # List of permuted input shapes
     shapes_out::Vector{NTuple{N, Int}} # List of permuted output shapes
-    
+
     function ParKron(ops::ParLinearOperator...)
-        
+
         ops = collect(ops)
         N = length(ops)
 
@@ -30,15 +30,15 @@ struct ParKron{D,R,P,F,N} <: ParSeparableOperator{D,R,P,Internal}
         shapes_in = nothing
         shapes_out = nothing
 
-        @ignore_derivatives begin 
+        @ignore_derivatives begin
 
             # Compute operator application order
             order = zeros(Int, N)
-            
+
             # Find the "innermost" type
             T = reduce(subset_type, map(DDT, ops))
             for i in 1:N
-                
+
                 # Find indices of operators not currently in the order with DDT = T
                 candidates = filter(j -> DDT(ops[j]) == T && j ∉ order, 1:N)
 
@@ -77,10 +77,10 @@ struct ParKron{D,R,P,F,N} <: ParSeparableOperator{D,R,P,Internal}
             # Update shapes from order
             for i in 1:N
                 if i > 1
-                    shapes_in[i] = tuple(circshift(collect(shapes_in[i]), order[i])...) 
+                    shapes_in[i] = tuple(circshift(collect(shapes_in[i]), order[i])...)
                 end
                 if i < N
-                    shapes_out[i] = tuple(circshift(collect(shapes_out[i]), order[i])...) 
+                    shapes_out[i] = tuple(circshift(collect(shapes_out[i]), order[i])...)
                 end
             end
 
@@ -165,7 +165,7 @@ function (A::ParKron{D,R,<:Applicable,F,N})(x::X) where {D,R,F,N,X<:AbstractVect
 end
 
 function distribute(A::ParKron, dims...; parent_comm=MPI.COMM_WORLD)
-    
+
     # Transform kronecker of operators to product of operators kroneckered with
     # identity operator and repartitions. E.g.
     #
@@ -176,7 +176,7 @@ function distribute(A::ParKron, dims...; parent_comm=MPI.COMM_WORLD)
     # K_dist = R_{C->out}*(C ⊗ I_B ⊗ I_A)*R_{B->A}*(I_C ⊗ B ⊗ I_A)*R_{A->B}*(I_C ⊗ I_B ⊗ A)*R_{in->A}
     #
     # assuming the application order is C -> B -> A.
-    
+
     ops = A.ops
     order = A.order
     N = length(ops)
@@ -217,7 +217,7 @@ function distribute(A::ParKron, dims...; parent_comm=MPI.COMM_WORLD)
         comm_i = comms[i+1]
         dims_i, _, coords_i = MPI.Cart_get(comm_i)
         Ai = ParBroadcasted(ops[o], comm_i)
-        
+
         Is_dim_lower = []
         Is_dim_upper = []
         if d > 1
@@ -241,3 +241,6 @@ function distribute(A::ParKron, dims...; parent_comm=MPI.COMM_WORLD)
     return ∘(ops_out...)
 
 end
+
+# TODO: sanity check this
+complexity(A::ParKron, m::MachineModel) = MultCost(m, DDT(A)) * prod(map(Domain, children(A)))

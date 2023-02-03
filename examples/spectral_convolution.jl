@@ -1,5 +1,7 @@
 using ParametricOperators
 
+m = SomeMachineModel()
+
 # Number of channels, spatial, and time dimensions
 (nc, nx, ny, nt) = (20, 64, 64, 50)
 
@@ -34,3 +36,17 @@ S = F'*R'*D*R*F
 θ = init(S)
 x = rand(DDT(S), Domain(S))
 y = S(θ)*x
+
+Sc = complexity(S, m)
+println("complexity is $Sc for F'*R'*D*R*F.")
+
+RF = (Ic*Ic) ⊗ (Rt*Ft) ⊗ (Ry*Fy) ⊗ (Rx*Fx)
+S2 = RF'*D*RF
+
+S2c = complexity(S2, m)
+println("complexity is $S2c after interleaving restrictions")
+
+y2 = S2(θ)*x
+
+maxerror = maximum(abs.(y-y2))
+println("max error is $maxerror")

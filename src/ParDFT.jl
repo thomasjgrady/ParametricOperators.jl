@@ -17,6 +17,9 @@ Range(A::ParDFT) = A.n
 (A::ParAdjoint{T,T,NonParametric,ParDFT{T}})(x::X) where {T<:Complex,X<:AbstractVector{T}} = ifft(x).*T(sqrt(A.op.n))
 (A::ParAdjoint{T,T,NonParametric,ParDFT{T}})(x::X) where {T<:Complex,X<:AbstractMatrix{T}} = ifft(x, 1).*T(sqrt(A.op.n))
 
+# the 5 comes from https://www.fftw.org/speed/method.html
+complexity(A::ParDFT{T}, m::MachineModel) where {T<:Complex} = MultCost(m, T) * A.n*log(A*n) * 5
+
 """
 Discrete real-valued Fourier transform operator.
 """
@@ -45,3 +48,6 @@ function (A::ParAdjoint{T,Complex{T},NonParametric,ParDRFT{T}})(y::Y) where {T<:
     x = vcat(y, conj(y[k:-1:2,:]))
     return real(ifft(x).*T(sqrt(A.op.n)))
 end
+
+# the 2.5 comes from https://www.fftw.org/speed/method.html
+complexity(A::ParDFT{T}, m::MachineModel) where {T<:Real} = MultCost(m, T) * A.n*log(A*n) * 2.5

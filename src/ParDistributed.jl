@@ -10,7 +10,7 @@ function local_size(global_size::Int, comm_rank::Int, comm_size::Int)
         s += 1
     end
     return s
-end  
+end
 
 """
 Lazy wrapper for distribution of an operator over conceptual rows/cols
@@ -31,3 +31,5 @@ Domain(A::ParDistributed) = local_size(Domain(A.op), A.coords[2], A.dims[2])
 Range(A::ParDistributed) = local_size(Range(A.op), A.coords[2], A.dims[2])
 children(A::ParDistributed) = [A.op]
 init(A::ParDistributed{D,R,L,Parametric,F}) where {D,R,L,F} = [init_distributed(A.op, A.dims, A.coords)]
+
+# TODO: implement complexity()

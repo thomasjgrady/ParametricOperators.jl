@@ -20,3 +20,5 @@ params(A::ParParameterized) = A.params
 Parameterize an external operator with a set of params.
 """
 (A::ParParametricOperator{D,R,L,External})(params) where {D,R,L} = ParParameterized(A, params)
+
+complexity(A::ParParameterized, m::MachineModel) = complexity(A.op, m)

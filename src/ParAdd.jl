@@ -40,3 +40,6 @@ adjoint(A::ParAdd) = ParAdd(map(adjoint, A.ops)...)
 (A::ParAdd{D,R,L,<:Applicable,F,N})(x::X) where {D,R,L,F,N,X<:AbstractVector{D}} = mapreduce(op -> op(x), +, A.ops)
 (A::ParAdd{D,R,L,<:Applicable,F,N})(x::X) where {D,R,L,F,N,X<:AbstractMatrix{D}} = mapreduce(op -> op(x), +, A.ops)
 *(x::X, A::ParAdd{D,R,L,<:Applicable,F,N}) where {D,R,L,F,N,X<:AbstractMatrix{R}} = mapreduce(op -> x*op, +, A.ops)
+
+# cost of applying the ops to the input vector, plus the cost of adding the intermediates together.
+complexity(A::ParAdd{D,R,L,P,F,N}, m::MachineModel) where {D,R,L,P,F,N} = mapreduce(op -> complexity(op, m), +, A.ops) + AddCost(m,D)*(length(A.ops)-1)

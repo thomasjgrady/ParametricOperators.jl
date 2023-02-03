@@ -41,3 +41,6 @@ end
 function (A::ParAdjoint{T,T,NonParametric,ParRestriction{T}})(y::Y) where {T,Y<:AbstractVector{T}}
     return vec(A(reshape(y, length(y), 1)))
 end
+
+# restriction just discards some of the data; adjoint(restriction) is zero-padding.  Assume both are free.
+complexity(A::ParRestriction, m::MachineModel) = 0.0
