@@ -1,29 +1,37 @@
 export ParMatrix
 
-"""
-Dense matrix operator.
-"""
-struct ParMatrix{T} <: ParLinearOperator{T,T,Parametric,External}
+struct ParMatrix{T,E} <: ParLinearOperator{T,T,Parametric,External,E}
     m::Int
     n::Int
-    ParMatrix(T, m, n) = new{T}(m, n)
-    ParMatrix(m, n) = new{Float64}(m, n)
+    id::UUID
+    ParMatrix(T, m, n; device=CPU, id=uuid4()) = new{T,device}(m, n, id)
+    ParMatrix(m, n; device=CPU, id=uuid4()) = ParMatrix(Float64, m, n; device=device, id=id)
 end
 
 Domain(A::ParMatrix) = A.n
 Range(A::ParMatrix) = A.m
+id(A::ParMatrix) = A.id
 
-complexity(A::ParMatrix{T}) where {T} = elementwise_multiplication_cost(T)*A.n*A.m
-
-function init!(A::ParMatrix{T}, d::Parameters) where {T}
-    d[A] = rand(T, A.m, A.n)/sqrt(A.m*A.n)
+function init!(A::ParMatrix{T,CPU}, params) where {T}
+    params[A] = rand(T, A.m, A.n)/sqrt(A.m*A.n)
 end
 
-(A::ParParameterized{T,T,Linear,ParMatrix{T},V})(x::X) where {T,V,X<:AbstractVector{T}} = A.params*x
-(A::ParParameterized{T,T,Linear,ParMatrix{T},V})(x::X) where {T,V,X<:AbstractMatrix{T}} = A.params*x
-(A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParMatrix{T}},V})(x::X) where {T,V,X<:AbstractVector{T}} = A.params'*x
-(A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParMatrix{T}},V})(x::X) where {T,V,X<:AbstractMatrix{T}} = A.params'*x
-*(x::X, A::ParParameterized{T,T,Linear,ParMatrix{T},V}) where {T,V,X<:AbstractVector{T}} = x*A.params
-*(x::X, A::ParParameterized{T,T,Linear,ParMatrix{T},V}) where {T,V,X<:AbstractMatrix{T}} = x*A.params
-*(x::X, A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParMatrix{T}},V}) where {T,V,X<:AbstractVector{T}} = x*A.params'
-*(x::X, A::ParParameterized{T,T,Linear,ParAdjoint{T,T,Parametric,ParMatrix{T}},V}) where {T,V,X<:AbstractMatrix{T}} = x*A.params'
+function init!(A::ParMatrix{T,GPU}, params) where {T}
+    params[A] = CUDA.rand(T, A.m, A.n)/sqrt(A.m*A.n)
+end
+
+(A::ParParameterized{T,T,Linear,CPU,ParMatrix{T,CPU},V})(x::X) where {T,V<:AbstractMatrix{T},X<:AbstractVector{T}} = A.params*x
+(A::ParParameterized{T,T,Linear,CPU,ParMatrix{T,CPU},V})(x::X) where {T,V<:AbstractMatrix{T},X<:AbstractMatrix{T}} = A.params*x
+(A::ParParameterized{T,T,Linear,GPU,ParMatrix{T,GPU},CuMatrix{T}})(x::CuVector{T}) where {T} = A.params*x
+(A::ParParameterized{T,T,Linear,GPU,ParMatrix{T,GPU},CuMatrix{T}})(x::CuMatrix{T}) where {T} = A.params*x
+
+(A::ParParameterized{T,T,Linear,CPU,ParAdjoint{T,T,Parametric,CPU,ParMatrix{T,CPU}},V})(x::X) where {T,V<:AbstractMatrix{T},X<:AbstractVector{T}} = A.params'*x
+(A::ParParameterized{T,T,Linear,CPU,ParAdjoint{T,T,Parametric,CPU,ParMatrix{T,CPU}},V})(x::X) where {T,V<:AbstractMatrix{T},X<:AbstractMatrix{T}} = A.params'*x
+(A::ParParameterized{T,T,Linear,GPU,ParAdjoint{T,T,Parametric,GPU,ParMatrix{T,GPU}},CuMatrix{T}})(x::CuVector{T}) where {T} = A.params'*x
+(A::ParParameterized{T,T,Linear,GPU,ParAdjoint{T,T,Parametric,GPU,ParMatrix{T,GPU}},CuMatrix{T}})(x::CuMatrix{T}) where {T} = A.params'*x
+
+*(x::X, A::ParParameterized{T,T,Linear,CPU,ParMatrix{T,CPU},V}) where {T,V<:AbstractMatrix{T},X<:AbstractMatrix{T}} = x*A.params
+*(x::CuMatrix{T}, A::ParParameterized{T,T,Linear,GPU,ParMatrix{T,GPU},CuMatrix{T}}) where {T} = x*A.params
+
+*(x::X, A::ParParameterized{T,T,Linear,CPU,ParAdjoint{T,T,Parametric,CPU,ParMatrix{T,CPU}},V}) where {T,V<:AbstractMatrix{T},X<:AbstractMatrix{T}} = x*A.params'
+*(x::CuMatrix{T}, A::ParParameterized{T,T,Linear,GPU,ParAdjoint{T,T,Parametric,GPU,ParMatrix{T,GPU}},CuMatrix{T}}) where {T} = x*A.params'
